@@ -1,0 +1,19 @@
+@Library('mf-jenkins-shared-libraries') _
+
+pipeline {
+    agent any
+    parameters{
+        choice(name: 'ENVIRONMENT', choices: ['', 'dev1-web', 'dev2-web', 'dev3-web', 'dev4-web', 'dev5-web', 'dev6-web', 'dev7-web', 'dev8-web', 'dev9-web', 'dev10-web', 'dev11-web', 'integration-web', 'regression-web', 'www-prd'], description: 'Please choose environment to purge')
+    }
+    environment{
+        CREDENTIALID = "fastly_token"
+        SERVICE_ID = FastlyGetServiceID("${ENVIRONMENT}")
+    }
+    stages {
+        stage('Fastly Cache Purge'){
+            steps {
+                FasltyServicePurgeAll("${SERVICE_ID}","${CREDENTIALID}")
+            }
+        }
+    }
+}

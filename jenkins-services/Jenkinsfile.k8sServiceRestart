@@ -1,0 +1,55 @@
+@Library('mf-jenkins-shared-libraries') _
+
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'ENVIRONMENT', choices: ['', 'dev1', 'dev2','dev3','dev4','dev5','dev6','dev7','dev8','dev9','dev10','dev11','regression','integration'], description: 'Please choose environment to refesh service') 
+        booleanParam(name: 'VARNISH', defaultValue: false, description: 'Toggle this value')
+        booleanParam(name: 'HAPROXY', defaultValue: false, description: 'Toggle this value')
+        booleanParam(name: 'PAPI', defaultValue: false, description: 'Toggle this value')
+        booleanParam(name: 'NGINX', defaultValue: false, description: 'Toggle this value')
+    }
+    stages {
+        stage('Restart') {
+            parallel {
+                stage ('varnish'){
+                    when { environment name: 'VARNISH', value: "true" }
+                    environment {
+                        SERVICE = 'varnish'
+                    }
+                    steps {
+                        K8sRestartService("${SERVICE}","${ENVIRONMENT}")
+                    }
+                }
+                stage ('haproxy'){
+                    when { environment name: 'HAPROXY', value: "true" }
+                    environment {
+                        SERVICE = 'haproxy'
+                    }
+                    steps {
+                        K8sRestartService("${SERVICE}","${ENVIRONMENT}")
+                    }
+                }
+                stage ('papi'){
+                    when { environment name: 'PAPI', value: "true" }
+                    environment {
+                        SERVICE = 'public-api'
+                    }
+                    steps {
+                        K8sRestartService("${SERVICE}","${ENVIRONMENT}")
+                    }
+                }
+                stage ('nginx'){
+                    when { environment name: 'NGINX', value: "true" }
+                    environment {
+                        SERVICE = 'nginx'
+                    }
+                    steps {
+                        K8sRestartService("${SERVICE}","${ENVIRONMENT}")
+                    }
+                }
+            }
+        }
+    }
+}

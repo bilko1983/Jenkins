@@ -1,0 +1,434 @@
+@Library('mf-jenkins-shared-libraries') _
+
+pipeline{
+    agent any
+    environment {
+        CREDENTIALID          = "d2f9bd44-fb0c-4d5b-a31a-cd8adeefdf9f"
+        CHEF_CLIENT_VERSION   = "12.19.36"
+        AWS_DEFAULT_REGION    = "eu-west-1"
+        ENVIRONMENT           = "aws-prd"
+        SLACK_CHANNEL         = "prd-deployment"
+        SLACK_DEVOPS          = "devops-priv"
+        SLACK_CHANNEL_DEVOPS  = "prd-deployment"
+        QACHANNEL             = "testchannel"
+        QAMESSAGE             = "* is ready to be tested* \n Please confirm if the tests were successful"
+        QALINK                = "*here*"
+        QARESPONSE            = ":white_check_mark: Passed QA tests: "
+        QAINPUT               = "Do you want to continue?"
+        QACONFIRM             = "yes"
+    }
+    parameters{
+        // booleanParam(name: 'SOLRMASTER', defaultValue: false, description: '')
+        // booleanParam(name: 'SOLRSLAVE-1', defaultValue: false, description: '')
+        // booleanParam(name: 'SOLRSLAVE-2', defaultValue: false, description: '')
+        // booleanParam(name: 'SOLRSLAVE-3', defaultValue: false, description: '')
+        booleanParam(name: 'CRON', defaultValue: false, description: '')
+        booleanParam(name: 'MAN-1', defaultValue: false, description: '')
+        booleanParam(name: 'MAN-2', defaultValue: false, description: '')
+        booleanParam(name: 'APP-1', defaultValue: false, description: '')
+        booleanParam(name: 'APP-2', defaultValue: false, description: '')
+        booleanParam(name: 'APP-3', defaultValue: false, description: '')
+        booleanParam(name: 'APP-4', defaultValue: false, description: '')
+        booleanParam(name: 'APP-5', defaultValue: false, description: '')
+        booleanParam(name: 'APP-6', defaultValue: false, description: '')
+        booleanParam(name: 'APP-7', defaultValue: false, description: '')
+        booleanParam(name: 'APP-8', defaultValue: false, description: '')
+        booleanParam(name: 'APP-9', defaultValue: false, description: '')
+        booleanParam(name: 'NGINX-1', defaultValue: false, description: '')
+        booleanParam(name: 'NGINX-2', defaultValue: false, description: '')
+        booleanParam(name: 'NGINX-3', defaultValue: false, description: '')
+    }
+    stages{
+        stage('Unmonitor Solr Nodes'){
+            parallel{
+                stage('SolrMaster'){
+                    environment {
+                        NODE = "solr-master"
+                        IP   = "10.5.3.27"
+                    }
+                    when { environment name: 'SOLRMASTER', value: "true" }
+                    steps{
+                        SolrAction("${CREDENTIALID}","unmonitor","${IP}")
+                        echo "Unmonitoring ${NODE}"
+                        Slack("${SLACK_CHANNEL}", "Unmonitoring `${NODE}`")
+                    }
+                }
+                stage('SolrSlave-1'){
+                    environment {
+                        NODE = "solr-slave-1"
+                        IP   = "10.5.4.12"
+                    }
+                    when { environment name: 'SOLRSLAVE-1', value: "true" }
+                    steps{
+                        SolrAction("${CREDENTIALID}","unmonitor","${IP}")
+                        echo "Unmonitoring ${NODE}"
+                        Slack("${SLACK_CHANNEL}", "Unmonitoring `${NODE}`")
+                    }
+                }
+                stage('SolrSlave-2'){
+                    environment {
+                        NODE = "solr-slave-2"
+                        IP   = "10.5.5.92"
+                    }
+                    when { environment name: 'SOLRSLAVE-2', value: "true" }
+                    steps{
+                        SolrAction("${CREDENTIALID}","unmonitor","${IP}")
+                        echo "Unmonitoring ${NODE}"
+                        Slack("${SLACK_CHANNEL}", "Unmonitoring `${NODE}`")
+                    }
+                }
+                stage('SolrSlave-3'){
+                    environment {
+                        NODE = "solr-slave-3"
+                        IP   = "10.5.3.123"
+                    }
+                    when { environment name: 'SOLRSLAVE-3', value: "true" }
+                    steps{
+                        SolrAction("${CREDENTIALID}","unmonitor","${IP}")
+                        echo "Unmonitoring ${NODE}"
+                        Slack("${SLACK_CHANNEL}", "Unmonitoring `${NODE}`")
+                    }
+                }
+            }
+        }
+        stage('SolrMaster'){
+            environment {
+                NODE = "solr-master"
+                IP   = "10.5.3.27"
+            }
+            when { environment name: 'SOLRMASTER', value: "true" }
+            steps{
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "solr")
+            }
+        }
+        stage('SolrSlave-1'){
+            environment {
+                NODE = "solr-slave-1"
+                IP   = "10.5.4.12"
+            }
+            when { environment name: 'SOLRSLAVE-1', value: "true" }
+            steps{
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "solr")
+            }
+        }
+        stage('SolrSlave-2'){
+            environment {
+                NODE = "solr-slave-2"
+                IP   = "10.5.5.92"
+            }
+            when { environment name: 'SOLRSLAVE-2', value: "true" }
+            steps{
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "solr")
+            }
+        }
+        stage('SolrSlave-3'){
+            environment {
+                NODE = "solr-slave-3"
+                IP   = "10.5.3.123"
+            }
+            when { environment name: 'SOLRSLAVE-3', value: "true" }
+            steps{
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "solr")
+            }
+        }
+        stage('Monitor Solr Nodes'){
+            parallel{
+                stage('SolrMaster'){
+                    environment {
+                        NODE = "solr-master"
+                        IP   = "10.5.3.27"
+                    }
+                    when { environment name: 'SOLRMASTER', value: "true" }
+                    steps{
+                        SolrAction("${CREDENTIALID}","monitor","${IP}")
+                        echo "Monitoring ${NODE}"
+                        Slack("${SLACK_CHANNEL}", "Monitoring `${NODE}`")
+                    }
+                }
+                stage('SolrSlave-1'){
+                    environment {
+                        NODE = "solr-slave-1"
+                        IP   = "10.5.4.12"
+                    }
+                    when { environment name: 'SOLRSLAVE-1', value: "true" }
+                    steps{
+                        SolrAction("${CREDENTIALID}","monitor","${IP}")
+                        echo "Monitoring ${NODE}"
+                        Slack("${SLACK_CHANNEL}", "Monitoring `${NODE}`")
+                    }
+                }
+                stage('SolrSlave-2'){
+                    environment {
+                        NODE = "solr-slave-2"
+                        IP   = "10.5.5.92"
+                    }
+                    when { environment name: 'SOLRSLAVE-2', value: "true" }
+                    steps{
+                        SolrAction("${CREDENTIALID}","monitor","${IP}")
+                        echo "Monitoring ${NODE}"
+                        Slack("${SLACK_CHANNEL}", "Monitoring `${NODE}`")
+                    }
+                }
+                stage('SolrSlave-3'){
+                    environment {
+                        NODE = "solr-slave-3"
+                        IP   = "10.5.3.123"
+                    }
+                    when { environment name: 'SOLRSLAVE-3', value: "true" }
+                    steps{
+                        SolrAction("${CREDENTIALID}","monitor","${IP}")
+                        echo "Monitoring ${NODE}"
+                        Slack("${SLACK_CHANNEL}", "Monitoring `${NODE}`")
+                    }
+                }
+            }
+        }
+        stage('Cron'){
+            environment {
+                NODE = "cron-1"
+                IP   = "10.5.3.102"
+            }
+            when { environment name: "CRON", value: "true" }
+            steps{
+                // ask to continue after nginx changes
+                echo "Restarting ${NODE}"
+                Slack("${SLACK_DEVOPS}", "Restarting `${NODE}` [${IP}]")
+                ChefKnife("${CREDENTIALID}","${IP}")
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "hybris")
+                //Slack("${SLACK_CHANNEL}", "successfully deployed build *[${BUILD}]* to `${NODE}` [${IP}] :white_check_mark:")
+                SlackApproval("${QACHANNEL}", "${NODE} ${QAMESSAGE}", "${QALINK}", "${QARESPONSE}", "${NODE}", "${QAINPUT}", "${QACONFIRM}")
+            }
+        }
+        stage('Man-1'){
+            environment {
+                NODE = "man-1"
+                IP   = "10.5.3.249"
+            }
+            when { environment name: "MAN-1", value: "true" }
+            steps{
+                echo "Deploying ${NODE}"
+                Slack("${SLACK_DEVOPS}", "Restarting `${NODE}` [${IP}]")
+                ChefKnife("${CREDENTIALID}","${IP}")
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "hybris")
+                //Slack("${SLACK_CHANNEL}", "successfully deployed build *[${BUILD}]* to `${NODE}` [${IP}] :white_check_mark:")
+                //SlackApproval("${QACHANNEL}", "${NODE} ${QAMESSAGE}", "${QALINK}", "${QARESPONSE}", "${NODE}", "${QAINPUT}", "${QACONFIRM}")
+            }
+        }
+        stage('APP-1'){
+            environment {
+                NODE = "app-1"
+                IP   = "10.5.3.150"
+            }
+            when { environment name: "APP-1", value: "true" }
+            steps{
+                echo "Deploying ${NODE}"
+                Slack("${SLACK_DEVOPS}", "Restarting `${NODE}` [${IP}]")
+                ChefKnife("${CREDENTIALID}","${IP}")
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "hybris")
+                //Slack("${SLACK_CHANNEL}", "successfully deployed build *[${BUILD}]* to `${NODE}` [${IP}] :white_check_mark:")
+                //SlackApproval("${QACHANNEL}", "${NODE} ${QAMESSAGE}", "${QALINK}", "${QARESPONSE}", "${NODE}", "${QAINPUT}", "${QACONFIRM}")
+            }
+        }
+        stage('APP-2'){
+            environment {
+                NODE = "app-2"
+                IP   = "10.5.4.25"
+            }
+            when { environment name: "APP-2", value: "true" }
+            steps{
+                echo "Deploying ${NODE}"
+                HAProxyUpdateStatus("${NODE}", "drain","${SLACK_DEVOPS}")
+                sh "sleep 120"
+                HAProxyUpdateStatus("${NODE}", "maint","${SLACK_DEVOPS}")
+                Slack("${SLACK_DEVOPS}", "Restarting `${NODE}` [${IP}]")
+                ChefKnife("${CREDENTIALID}","${IP}")
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "hybris")
+                //Slack("${SLACK_CHANNEL}", "successfully deployed build *[${BUILD}]* to `${NODE}` [${IP}] :white_check_mark:")
+                //HAProxyUpdateStatus("${NODE}", "ready","${SLACK_CHANNEL}")
+            }
+        }
+        stage('APP-3'){
+            environment {
+                NODE = "app-3"
+                IP   = "10.5.5.9"
+            }
+            when { environment name: "APP-3", value: "true" }
+            steps{
+                echo "Deploying ${NODE}"
+                HAProxyUpdateStatus("${NODE}", "drain","${SLACK_DEVOPS}")
+                sh "sleep 120"
+                HAProxyUpdateStatus("${NODE}", "maint","${SLACK_DEVOPS}")
+                Slack("${SLACK_DEVOPS}", "Restarting `${NODE}` [${IP}]")
+                ChefKnife("${CREDENTIALID}","${IP}")
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "hybris")
+                //Slack("${SLACK_CHANNEL}", "successfully deployed build *[${BUILD}]* to `${NODE}` [${IP}] :white_check_mark:")
+                //HAProxyUpdateStatus("${NODE}", "ready","${SLACK_CHANNEL}")
+            }
+        }
+        stage('APP-4'){
+            environment {
+                NODE = "app-4"
+                IP   = "10.5.3.93"
+            }
+            when { environment name: "APP-4", value: "true" }
+            steps{
+                echo "Deploying ${NODE}"
+                HAProxyUpdateStatus("${NODE}", "drain","${SLACK_DEVOPS}")
+                sh "sleep 120"
+                HAProxyUpdateStatus("${NODE}", "maint","${SLACK_DEVOPS}")
+                Slack("${SLACK_DEVOPS}", "Restarting `${NODE}` [${IP}]")
+                ChefKnife("${CREDENTIALID}","${IP}")
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "hybris")
+                //Slack("${SLACK_CHANNEL}", "successfully deployed build *[${BUILD}]* to `${NODE}` [${IP}] :white_check_mark:")
+                //HAProxyUpdateStatus("${NODE}", "ready","${SLACK_CHANNEL}")
+            }
+        }
+        stage('APP-5'){
+            environment {
+                NODE = "app-5"
+                IP   = "10.5.4.195"
+            }
+            when { environment name: "APP-5", value: "true" }
+            steps{
+                echo "Deploying ${NODE}"
+                HAProxyUpdateStatus("${NODE}", "drain","${SLACK_DEVOPS}")
+                sh "sleep 120"
+                HAProxyUpdateStatus("${NODE}", "maint","${SLACK_DEVOPS}")
+                Slack("${SLACK_DEVOPS}", "Restarting `${NODE}` [${IP}]")
+                ChefKnife("${CREDENTIALID}","${IP}")
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "hybris")
+                //Slack("${SLACK_CHANNEL}", "successfully deployed build *[${BUILD}]* to `${NODE}` [${IP}] :white_check_mark:")
+                //HAProxyUpdateStatus("${NODE}", "ready","${SLACK_CHANNEL}")
+            }
+        }
+        stage('APP-6'){
+            environment {
+                NODE = "app-6"
+                IP   = "10.5.5.251"
+            }
+            when { environment name: "APP-6", value: "true" }
+            steps{
+                echo "Deploying ${NODE}"
+                HAProxyUpdateStatus("${NODE}", "drain","${SLACK_DEVOPS}")
+                sh "sleep 120"
+                HAProxyUpdateStatus("${NODE}", "maint","${SLACK_DEVOPS}")
+                Slack("${SLACK_DEVOPS}", "Restarting `${NODE}` [${IP}]")
+                ChefKnife("${CREDENTIALID}","${IP}")
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "hybris")
+                //Slack("${SLACK_CHANNEL}", "successfully deployed build *[${BUILD}]* to `${NODE}` [${IP}] :white_check_mark:")
+                //HAProxyUpdateStatus("${NODE}", "ready","${SLACK_CHANNEL}")
+            }
+        }
+        stage('APP-7'){
+            environment {
+                NODE = "app-7"
+                IP   = "10.5.3.242"
+            }
+            when { environment name: "APP-7", value: "true" }
+            steps{
+                echo "Deploying ${NODE}"
+                HAProxyUpdateStatus("${NODE}", "drain","${SLACK_DEVOPS}")
+                sh "sleep 120"
+                HAProxyUpdateStatus("${NODE}", "maint","${SLACK_DEVOPS}")
+                Slack("${SLACK_DEVOPS}", "Restarting `${NODE}` [${IP}]")
+                ChefKnife("${CREDENTIALID}","${IP}")
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "hybris")
+                //Slack("${SLACK_CHANNEL}", "successfully deployed build *[${BUILD}]* to `${NODE}` [${IP}] :white_check_mark:")
+                //HAProxyUpdateStatus("${NODE}", "ready","${SLACK_CHANNEL}")
+            }
+        }
+        stage('APP-8'){
+            environment {
+                NODE = "app-8"
+                IP   = "10.5.4.162"
+            }
+            when { environment name: "APP-8", value: "true" }
+            steps{
+                echo "Deploying ${NODE}"
+                Slack("${SLACK_DEVOPS}", "Restarting `${NODE}` [${IP}]")
+                ChefKnife("${CREDENTIALID}","${IP}")
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "hybris")
+            }
+        }
+        stage('APP-9'){
+            environment {
+                NODE = "app-9"
+                IP   = "10.5.5.64"
+                }
+            when { environment name: "APP-9", value: "true" }
+            steps{
+                echo "Deploying ${NODE}"
+                HAProxyUpdateStatus("${NODE}", "drain","${SLACK_DEVOPS}")
+                sh "sleep 120"
+                HAProxyUpdateStatus("${NODE}", "maint","${SLACK_DEVOPS}")
+                Slack("${SLACK_DEVOPS}", "Restarting `${NODE}` [${IP}]")
+                ChefKnife("${CREDENTIALID}","${IP}")
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "hybris")
+                //Slack("${SLACK_CHANNEL}", "successfully deployed build *[${BUILD}]* to `${NODE}` [${IP}] :white_check_mark:")
+                ////HAProxyUpdateStatus("${NODE}", "ready","${SLACK_CHANNEL}")
+            }
+        }
+        stage('NGINX-1'){
+            environment {
+                NODE = "www-1"
+                IP   = "10.5.3.203"
+                }
+            when { environment name: 'NGINX-1', value: "true" }
+            steps{
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "nginx")
+            }
+        }
+        stage('NGINX-2'){
+            environment {
+                NODE = "www-2"
+                IP   = "10.5.4.196"
+                }
+            when { environment name: 'NGINX-2', value: "true" }
+            steps{
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "nginx")
+            }
+        }
+        stage('NGINX-3'){
+            environment {
+                NODE = "www-3"
+                IP   = "10.5.5.139"
+                }
+            when { environment name: 'NGINX-3', value: "true" }
+            steps{
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "nginx")
+            }
+        }
+        stage('Man-2'){
+            environment {
+                NODE = "man-2"
+                IP   = "10.5.4.56"
+                }
+            when { environment name: "MAN-2", value: "true" }
+            steps{
+                echo "Deploying ${NODE}"
+                Slack("${SLACK_DEVOPS}", "Restarting `${NODE}` [${IP}]")
+                ChefServiceRestartAgainstNode("${CREDENTIALID}", "${NODE}", "${ENVIRONMENT}", "AWS-PRD", "hybris")
+                //Slack("${SLACK_CHANNEL}", "successfully deployed build *[${BUILD}]* to `${NODE}` [${IP}] :white_check_mark:")
+            }
+        }
+        stage('Reastart Varnish'){
+            when { environment name: 'VARNISH', value: "true" }
+            steps{
+               Slack("${SLACK_CHANNEL}", "Restarting `Varnish`")
+               build (job:'restart-varnish', wait: true)
+               Slack("${SLACK_CHANNEL}", "Restarted Varnish :white_check_mark:")
+            }
+        }
+    }
+    post {
+      failure {
+            Slack("${SLACK_CHANNEL}",":x: Deployment failure\nLogs can be seen <$BUILD_URL/console|*here*>")
+      }
+    }
+}
+
+def ChefKnife(credentialId,nodeIp) {
+    withCredentials([sshUserPrivateKey(credentialsId: "${credentialId}", keyFileVariable: 'PEM', passphraseVariable: '', usernameVariable: 'USERNAME')]) {
+        sh "ssh -i ${PEM} -t -t -t -o BatchMode=yes -o StrictHostKeyChecking=no ${USERNAME}@${nodeIp} sudo chef-client -l info"
+    }
+}

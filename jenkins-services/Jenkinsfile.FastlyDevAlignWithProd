@@ -1,0 +1,22 @@
+@Library('mf-jenkins-shared-libraries') _
+
+pipeline {
+    agent any
+    options {
+        timeout(time: 20, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+    environment {
+        ENVIRONMENT = HybrisGetEnvironments()
+    }
+    stages {
+        stage('No Downtime Deploy') {
+            steps {
+                build (job: '../devops-resources/prepare_fastly_service' , wait: true, parameters:[
+                    [$class: 'StringParameterValue', name: 'FASTLY_SERVICE', value: "${ENVIRONMENT}-web"],
+                    [$class: 'StringParameterValue', name: 'BRANCH', value: "www-prd"]]
+                )
+            }
+        }
+    }
+}

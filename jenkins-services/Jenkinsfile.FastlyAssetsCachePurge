@@ -1,0 +1,13 @@
+@Library('mf-jenkins-shared-libraries') _
+
+pipeline {
+    agent any
+    stages {
+        stage('Fastly Cache Purge'){
+            steps {
+                FastlyAssetsCachePurge()
+            }
+        }
+    }
+}
+

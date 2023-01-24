@@ -1,0 +1,206 @@
+@Library('mf-jenkins-shared-libraries') _
+
+pipeline{
+    agent any
+
+    environment {
+        CREDENTIALID    = "d2f9bd44-fb0c-4d5b-a31a-cd8adeefdf9f"
+        SLACK_DEVOPS    = "devops-priv"
+    }
+
+    parameters {
+        string(name: "BUILD", defaultValue: '', description: 'Build number to deploy, if no BUILD is passed it will get the latest.', )
+    }
+
+    stages {
+        stage ('AWS copy') {
+            steps {
+                script {if (!env.BUILD){ error 'Build number has NOT been entered' }}
+                build (job: '../aws-copy' , wait: true, parameters:[
+                        [$class: 'StringParameterValue', name: 'BUILD', value: "${BUILD}" ]]
+                    )
+            }
+        }
+        // stage ('Chef Publish') {
+        //     steps {
+        //         build '../Chef Publish'
+        //     }
+        // }
+        // stage('Chef Client on Solr nodes'){
+        //     parallel{
+        //         stage('SolrMaster'){
+        //             environment {
+        //                 NODE = "solr-master"
+        //                 IP   = "10.5.3.27"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //         stage('SolrSlave-1'){
+        //             environment {
+        //                 NODE = "solr-slave-1"
+        //                 IP   = "10.5.4.12"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //         stage('SolrSlave-2'){
+        //             environment {
+        //                 NODE = "solr-slave-2"
+        //                 IP   = "10.5.5.92"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //         stage('SolrSlave-3'){
+        //             environment {
+        //                 NODE = "solr-slave-3"
+        //                 IP   = "10.5.3.123"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //     }
+        // }
+        // stage ('Chef Client on App nodes'){
+        //     parallel {
+        //         stage('APP-1'){
+        //             environment {
+        //                 NODE = "app-1"
+        //                 IP   = "10.5.3.150"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //         stage('APP-2'){
+        //             environment {
+        //                 NODE = "app-2"
+        //                 IP   = "10.5.4.25"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //         stage('APP-3'){
+        //             environment {
+        //                 NODE = "app-3"
+        //                 IP   = "10.5.5.9"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //         stage('APP-4'){
+        //             environment {
+        //                 NODE = "app-4"
+        //                 IP   = "10.5.3.93"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //         stage('APP-5'){
+        //             environment {
+        //                 NODE = "app-5"
+        //                 IP   = "10.5.4.195"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //         stage('APP-6'){
+        //             environment {
+        //                 NODE = "app-6"
+        //                 IP   = "10.5.5.251"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //         stage('APP-7'){
+        //             environment {
+        //                 NODE = "app-7"
+        //                 IP   = "10.5.3.242"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //         stage('APP-8'){
+        //             environment {
+        //                 NODE = "app-8"
+        //                 IP   = "10.5.4.162"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //         stage ('APP-9') {
+        //             environment {
+        //                 NODE = "app-9"
+        //                 IP   = "10.5.5.64"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //     }
+        // }
+        // stage ('Chef Client other Hybris nodes') {
+        //     parallel {
+        //         stage('Man-1'){
+        //             environment {
+        //                 NODE = "man-1"
+        //                 IP   = "10.5.3.249"
+        //                 }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //         stage('Man-2'){
+        //             environment {
+        //                 NODE = "man-2"
+        //                 IP   = "10.5.4.56"
+        //                 }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //         stage ('CRON-1') {
+        //             environment {
+        //                 NODE = "cron-1"
+        //                 IP   = "10.5.3.102"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //         stage ('CRON-2') {
+        //             environment {
+        //                 NODE = "cron-2"
+        //                 IP   = "10.5.4.164"
+        //             }
+        //             steps{
+        //                 ChefClientRun("${CREDENTIALID}","${IP}")
+        //             }
+        //         }
+        //     }
+        // }
+    }
+    post {
+        success {
+            Slack("${SLACK_DEVOPS}",":white_check_mark: Pre-release checks passed successfully for build `$BUILD`")
+        }
+        failure {
+            Slack("${SLACK_DEVOPS}",":x: Pre-release check failure\nLogs can be seen <$BUILD_URL/console|*here*>")
+        }
+        aborted {
+            Slack("${SLACK_CHANNEL}",":bangbang: Pre-release checks cancelled\nLogs can be seen <$BUILD_URL/console|*here*>")
+        }
+    }
+}

@@ -1,0 +1,67 @@
+import hudson.model.*
+import hudson.triggers.*
+  
+// get all jobs
+jenkinsJobs = Jenkins.instance.getAllItems(AbstractItem.class);
+
+folders = ['dev1','dev2', 'dev3','dev4', 'dev5', 'dev6', 'dev7', 'dev8', 'dev9', 'dev10', 'regression', 'integration']
+
+println ("--------------------------------------------")
+println ("Re-enable all 'start-ec2-instances' pipelines")
+println ("--------------------------------------------")
+jobName = "start-ec2-instances"
+enableJobs(folders, jobName)
+println ("--------------------------------------------")
+println ("Reset trigger build for 'start-ec2-instances'")
+println ("--------------------------------------------")
+setCron(['dev8'], "30 5 * * 1-5", jobName)
+setCron(['dev1', 'dev2', 'dev3'], "00 6 * * 1-5", jobName)
+setCron(['dev4', 'dev5', 'dev6'], "30 6 * * 1-5", jobName)
+setCron(['dev7', 'dev9'], "00 7 * * 1-5", jobName)
+setCron(['dev10', 'integration', 'regression'], "30 7 * * 1-5", jobName)
+
+println ("--------------------------------------------")
+println ("Re-enable all 'stop-ec2-instances' pipelines")
+println ("--------------------------------------------")
+jobName = "stop-ec2-instances"
+enableJobs(folders, jobName)
+println ("--------------------------------------------")
+println ("Reset trigger build for 'stop-ec2-instances'")
+println ("--------------------------------------------")
+setCron(folders, "30 18 * * *", jobName)
+
+
+def enableJobs(folders, jobName) {
+  for (job in jenkinsJobs) {
+    root = job.fullName.split('/')[0]
+    if (root in folders && job.name == jobName) {
+      if (job.disabled) {
+          println (job.fullName + " -> RE-ENABLED")
+      }
+      job.disabled=false
+    }
+  }
+}
+
+def setCron(folders, cron, jobName) {
+  for (job in jenkinsJobs) {
+    root = job.fullName.split('/')[0]
+    if (root in folders && job.name == jobName) {
+        
+if (job.metaClass.getMetaMethod("getTriggers")) {
+            // Gets CRON triggers from Job
+            job.triggers.each{ descriptor, trigger ->
+                // Verifies that the specs have been entered and prints the job's information
+                if(trigger instanceof TimerTrigger) {
+                    if (trigger.spec) {	
+                        if (trigger.spec != cron) {
+                            println (job.fullName + " - RE-CONFIGURED [" + trigger.spec + "] -> [$cron]")
+                            job.addTrigger(new TimerTrigger(cron))
+                        }
+                    }
+                }
+            }
+        }
+    }
+  }
+}

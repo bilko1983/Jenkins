@@ -1,0 +1,36 @@
+@Library('mf-jenkins-shared-libraries') _
+
+pipeline {
+    agent any
+    environment {
+        AWS_DEFAULT_REGION = "eu-west-1"
+        ROLE_SESSION_NAME="jenkins-session"
+        AWS_ROLE="ExternalAdminRole"
+        AWS_ACCOUNT="953612792372"
+        RDS_STATUS = AWSRdsGetClusterStatus("${AWS_ROLE}", "${AWS_ACCOUNT}", "staging")
+    }
+    options {
+      timeout (time: 20, unit: 'MINUTES')
+      disableConcurrentBuilds()
+    }
+    stages {
+        stage('Starting DB') {
+            when { 
+                not { environment name: "RDS_STATUS", value: "available" } 
+            }
+            options { 
+                retry(3) 
+            }
+            steps {
+                AWSRdsClusterStart("${AWS_ROLE}", "${AWS_ACCOUNT}", "staging")
+            }
+        }
+        stage('EC2 Instances Starting') {
+            steps {
+                withAWS(role:"${AWS_ROLE}", roleAccount:"${AWS_ACCOUNT}", duration: 900, roleSessionName: "${ROLE_SESSION_NAME}") {
+                    AWSActionEC2Instance("start", "staging-app*,staging-man*,staging-cron*,staging-solr*,staging-*esb*")
+                }
+            }
+        }
+    }
+}

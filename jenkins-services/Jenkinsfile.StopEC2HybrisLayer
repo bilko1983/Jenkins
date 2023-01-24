@@ -1,0 +1,41 @@
+@Library('mf-jenkins-shared-libraries') _
+
+pipeline {
+    agent any
+    parameters {
+        choice(name: 'ENVIRONMENT', choices: HybrisGetEnvironments(), description: 'Choose environment')
+    }
+    options {
+        timeout(time: 20, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+    environment {
+        AWS_DEFAULT_REGION = "eu-west-1"
+        ROLE_SESSION_NAME="jenkins-session"
+        AWS_ROLE="ExternalAdminRole"
+        AWS_ACCOUNT="953612792372"
+        RDS_STATUS = AWSRdsGetClusterStatus("${AWS_ROLE}", "${AWS_ACCOUNT}", "${ENVIRONMENT}")
+    }
+    stages {
+        stage('DB TABLE FLUSH'){
+            when { environment name: "RDS_STATUS", value: "available" }
+            options { retry(2) }
+            steps {
+                AWSDevEnvRdsTableCleanup("${ENVIRONMENT}")
+            }
+        }
+        stage('Stopping DB'){
+            when { environment name: "RDS_STATUS", value: "available" }
+            steps {
+                AWSRdsClusterStop("${AWS_ROLE}", "${AWS_ACCOUNT}", "${ENVIRONMENT}")
+            }
+        }
+        stage('EC2 Instances Stopping') {
+            steps {
+                withAWS(role:"${AWS_ROLE}", roleAccount:"${AWS_ACCOUNT}", duration: 900, roleSessionName: "${ROLE_SESSION_NAME}") {
+                    AWSActionEC2Instance("stop" ,"${ENVIRONMENT}-app*,${ENVIRONMENT}-man*,${ENVIRONMENT}-cron*,${ENVIRONMENT}-solr*,${ENVIRONMENT}-*esb*")
+                }
+            }
+        }
+    }
+}

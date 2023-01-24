@@ -1,0 +1,184 @@
+@Library('mf-jenkins-shared-libraries') _
+pipeline {
+    agent any
+        environment {
+            CREDENTIALID        = "d2f9bd44-fb0c-4d5b-a31a-cd8adeefdf9f"
+            SLACK_CHANNEL       = "prd-deployment"
+            SLACK_DEVOPS        = "devops-priv"
+        }
+       parameters{
+        booleanParam(name: 'APP-1', defaultValue: false, description: '')
+        booleanParam(name: 'APP-2', defaultValue: false, description: '')
+        booleanParam(name: 'APP-3', defaultValue: false, description: '')
+        booleanParam(name: 'APP-4', defaultValue: false, description: '')
+        booleanParam(name: 'APP-5', defaultValue: false, description: '')
+        booleanParam(name: 'APP-6', defaultValue: false, description: '')
+        booleanParam(name: 'APP-7', defaultValue: false, description: '')
+        booleanParam(name: 'APP-8', defaultValue: false, description: '')
+        booleanParam(name: 'APP-9', defaultValue: false, description: '')
+        }
+        options {
+            disableConcurrentBuilds()
+            buildDiscarder(logRotator(numToKeepStr: '10'))
+        }
+
+    stages {
+        stage('app-1 ,app-2 and app-3'){ 
+            parallel {
+                stage ('APP-1'){
+                    environment { 
+                        DOMAIN = "aws-prd-hyb-app-1.prd.aws.matchesfashion.com"
+                        NODE_NAME = "app-1" 
+                    }
+                    when { environment name: "APP-1", value: "true" }
+                    steps{
+                        HAProxyUpdateStatus("${NODE_NAME}", "drain","${SLACK_DEVOPS}")
+                        HAProxyUpdateStatus("${NODE_NAME}", "maint","${SLACK_DEVOPS}")
+                        Slack("${SLACK_CHANNEL}", "Restarting Prod Server `${NODE_NAME}` [${DOMAIN}]")
+                        HybrisRestart("${CREDENTIALID}","${DOMAIN}","${NODE_NAME}")
+                        HybrisStatusCheck("${DOMAIN}","${NODE_NAME}")
+                        Slack("${SLACK_CHANNEL}", "Successfully restarted server `${NODE_NAME}` [${DOMAIN}] :white_check_mark:")
+                        HAProxyUpdateStatus("${NODE_NAME}", "ready","${SLACK_DEVOPS}")
+                    }
+                }
+                stage ('APP-2'){
+                    environment { 
+                        DOMAIN = "aws-prd-hyb-app-2.prd.aws.matchesfashion.com" 
+                        NODE_NAME = "app-2" 
+                    }
+                    when { environment name: "APP-2", value: "true" }
+                    steps{
+                        HAProxyUpdateStatus("${NODE_NAME}", "drain","${SLACK_DEVOPS}")
+                        HAProxyUpdateStatus("${NODE_NAME}", "maint","${SLACK_DEVOPS}")
+                        Slack("${SLACK_CHANNEL}", "Restarting Prod Server `${NODE_NAME}` [${DOMAIN}]")
+                        HybrisRestart("${CREDENTIALID}","${DOMAIN}","${NODE_NAME}")
+                        HybrisStatusCheck("${DOMAIN}","${NODE_NAME}")
+                        Slack("${SLACK_CHANNEL}", "Successfully restarted server `${NODE_NAME}` [${DOMAIN}] :white_check_mark:")
+                        HAProxyUpdateStatus("${NODE_NAME}", "ready","${SLACK_DEVOPS}")
+                    }
+                }
+                stage ('APP-3'){
+                    environment { 
+                        DOMAIN = "aws-prd-hyb-app-3.prd.aws.matchesfashion.com" 
+                        NODE_NAME = "app-3" 
+                    }
+                    when { environment name: "APP-3", value: "true" }
+                    steps{
+                        HAProxyUpdateStatus("${NODE_NAME}", "drain","${SLACK_DEVOPS}")
+                        HAProxyUpdateStatus("${NODE_NAME}", "maint","${SLACK_DEVOPS}")
+                        Slack("${SLACK_CHANNEL}", "Restarting Prod Server `${NODE_NAME}` [${DOMAIN}]")
+                        HybrisRestart("${CREDENTIALID}","${DOMAIN}","${NODE_NAME}")
+                        HybrisStatusCheck("${DOMAIN}","${NODE_NAME}")
+                        Slack("${SLACK_CHANNEL}", "Successfully restarted server `${NODE_NAME}` [${DOMAIN}] :white_check_mark:")
+                        HAProxyUpdateStatus("${NODE_NAME}", "ready","${SLACK_DEVOPS}")
+                    }
+                }
+            }
+        }
+        stage('app-4 ,app-5 and app-6'){ 
+            parallel {
+                stage ('APP-4'){
+                    environment { 
+                        DOMAIN = "aws-prd-hyb-app-4.prd.aws.matchesfashion.com" 
+                        NODE_NAME = "app-4" 
+                    }
+                    when { environment name: "APP-4", value: "true" }
+                    steps{
+                        HAProxyUpdateStatus("${NODE_NAME}", "drain","${SLACK_DEVOPS}")
+                        HAProxyUpdateStatus("${NODE_NAME}", "maint","${SLACK_DEVOPS}")
+                        Slack("${SLACK_CHANNEL}", "Restarting Prod Server `${NODE_NAME}` [${DOMAIN}]")
+                        HybrisRestart("${CREDENTIALID}","${DOMAIN}","${NODE_NAME}")
+                        HybrisStatusCheck("${DOMAIN}","${NODE_NAME}")
+                        Slack("${SLACK_CHANNEL}", "Successfully restarted server `${NODE_NAME}` [${DOMAIN}] :white_check_mark:")
+                        HAProxyUpdateStatus("${NODE_NAME}", "ready","${SLACK_DEVOPS}")
+                    }
+                    
+                }
+                stage ('APP-5'){
+                    environment { 
+                        DOMAIN = "aws-prd-hyb-app-5.prd.aws.matchesfashion.com" 
+                        NODE_NAME = "app-5" 
+                    }
+                    when { environment name: "APP-5", value: "true" }
+                    steps{
+                        HAProxyUpdateStatus("${NODE_NAME}", "drain","${SLACK_DEVOPS}")
+                        HAProxyUpdateStatus("${NODE_NAME}", "maint","${SLACK_DEVOPS}")
+                        Slack("${SLACK_CHANNEL}", "Restarting Prod Server `${NODE_NAME}` [${DOMAIN}]")
+                        HybrisRestart("${CREDENTIALID}","${DOMAIN}","${NODE_NAME}")
+                        HybrisStatusCheck("${DOMAIN}","${NODE_NAME}")
+                        Slack("${SLACK_CHANNEL}", "Successfully restarted server `${NODE_NAME}` [${DOMAIN}] :white_check_mark:")
+                        HAProxyUpdateStatus("${NODE_NAME}", "ready","${SLACK_DEVOPS}")
+                    }
+                }
+                stage ('APP-6'){
+                    environment { 
+                        DOMAIN = "aws-prd-hyb-app-6.prd.aws.matchesfashion.com" 
+                        NODE_NAME = "app-6" 
+                    }
+                    when { environment name: "APP-6", value: "true" }
+                    steps{
+                        HAProxyUpdateStatus("${NODE_NAME}", "drain","${SLACK_DEVOPS}")
+                        HAProxyUpdateStatus("${NODE_NAME}", "maint","${SLACK_DEVOPS}")
+                        Slack("${SLACK_CHANNEL}", "Restarting Prod Server `${NODE_NAME}` [${DOMAIN}]")
+                        HybrisRestart("${CREDENTIALID}","${DOMAIN}","${NODE_NAME}")
+                        HybrisStatusCheck("${DOMAIN}","${NODE_NAME}")
+                        Slack("${SLACK_CHANNEL}", "Successfully restarted server `${NODE_NAME}` [${DOMAIN}] :white_check_mark:")
+                        HAProxyUpdateStatus("${NODE_NAME}", "ready","${SLACK_DEVOPS}")
+                    }
+                }
+            }
+        }
+        stage('app-7 ,app-8 and app-9'){
+            parallel {
+                stage ('APP-7'){
+                    environment { 
+                        DOMAIN = "aws-prd-hyb-app-7.prd.aws.matchesfashion.com" 
+                        NODE_NAME = "app-7" 
+                    }
+                    when { environment name: "APP-7", value: "true" }
+                    steps{
+                        HAProxyUpdateStatus("${NODE_NAME}", "drain","${SLACK_DEVOPS}")
+                        HAProxyUpdateStatus("${NODE_NAME}", "maint","${SLACK_DEVOPS}")
+                        Slack("${SLACK_CHANNEL}", "Restarting Prod Server `${NODE_NAME}` [${DOMAIN}]")
+                        HybrisRestart("${CREDENTIALID}","${DOMAIN}","${NODE_NAME}")
+                        HybrisStatusCheck("${DOMAIN}","${NODE_NAME}")
+                        Slack("${SLACK_CHANNEL}", "Successfully restarted server `${NODE_NAME}` [${DOMAIN}] :white_check_mark:")
+                        HAProxyUpdateStatus("${NODE_NAME}", "ready","${SLACK_DEVOPS}")
+                    }
+                }
+                stage ('APP-8'){
+                    environment { 
+                        DOMAIN = "aws-prd-hyb-app-8.prd.aws.matchesfashion.com" 
+                        NODE_NAME = "app-8" 
+                    }
+                    when { environment name: "APP-8", value: "true" }
+                    steps{
+                        HAProxyUpdateStatus("${NODE_NAME}", "drain","${SLACK_DEVOPS}")
+                        HAProxyUpdateStatus("${NODE_NAME}", "maint","${SLACK_DEVOPS}")
+                        Slack("${SLACK_CHANNEL}", "Restarting Prod Server `${NODE_NAME}` [${DOMAIN}]")
+                        HybrisRestart("${CREDENTIALID}","${DOMAIN}","${NODE_NAME}")
+                        HybrisStatusCheck("${DOMAIN}","${NODE_NAME}")
+                        Slack("${SLACK_CHANNEL}", "Successfully restarted server `${NODE_NAME}` [${DOMAIN}] :white_check_mark:")
+                        HAProxyUpdateStatus("${NODE_NAME}", "ready","${SLACK_DEVOPS}")
+                    }   
+                }
+                stage ('APP-9'){
+                    environment { 
+                        DOMAIN = "aws-prd-hyb-app-9.prd.aws.matchesfashion.com" 
+                        NODE_NAME = "app-9" 
+                    }
+                    when { environment name: "APP-9", value: "true" }
+                    steps{
+                        HAProxyUpdateStatus("${NODE_NAME}", "drain","${SLACK_DEVOPS}")
+                        HAProxyUpdateStatus("${NODE_NAME}", "maint","${SLACK_DEVOPS}")
+                        Slack("${SLACK_CHANNEL}", "Restarting Prod Server `${NODE_NAME}` [${DOMAIN}]")
+                        HybrisRestart("${CREDENTIALID}","${DOMAIN}","${NODE_NAME}")
+                        HybrisStatusCheck("${DOMAIN}","${NODE_NAME}")
+                        Slack("${SLACK_CHANNEL}", "Successfully restarted server `${NODE_NAME}` [${DOMAIN}] :white_check_mark:")
+                    }   
+                }
+            }
+        }
+    }
+}
+

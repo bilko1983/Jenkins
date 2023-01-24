@@ -1,0 +1,31 @@
+@Library('mf-jenkins-shared-libraries') _
+
+pipeline {
+    agent any
+    options {
+        timeout(time: 20, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+    environment {
+        AWS_DEFAULT_REGION = "eu-west-1"
+        ROLE_SESSION_NAME="jenkins-session"
+        AWS_ROLE="ExternalAdminRole"
+        AWS_ACCOUNT="953612792372"
+        RDS_STATUS = AWSRdsGetClusterStatus("${AWS_ROLE}", "${AWS_ACCOUNT}", "staging")
+    }
+    stages {
+        stage('Stopping DB'){
+            when { environment name: "RDS_STATUS", value: "available" }
+            steps {
+                AWSRdsClusterStop("${AWS_ROLE}", "${AWS_ACCOUNT}", "staging")
+            }
+        }
+        stage('EC2 Instances Stopping') {
+            steps {
+                withAWS(role:"${AWS_ROLE}", roleAccount:"${AWS_ACCOUNT}", duration: 900, roleSessionName: "${ROLE_SESSION_NAME}") {
+                    AWSActionEC2Instance("stop" ,"staging-app*,staging-man*,staging-cron*,staging-solr*,staging-*esb*")
+                }
+            }
+        }
+    }
+}
